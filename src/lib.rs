@@ -51,17 +51,24 @@ impl LogFile {
     ) -> anyhow::Result<Option<(chrono::Date<chrono::Utc>, std::fs::File)>> {
         let now_date = chrono::Utc::now().date();
         let start_date = date.unwrap_or(now_date.clone());
-        if start_date.eq(&now_date) && file.is_some() {
+        let year = format!("{:04}", now_date.year());
+        let month = format!("{:02}", now_date.month());
+        let day = format!("{:02}", now_date.day());
+        let new_file_name = format!(
+            "{}_{}-{}-{}.log",
+            app_name, year, month, day
+        );
+        let mut path = std::path::PathBuf::from(log_dir);
+        if start_date.eq(&now_date) && file.is_some() { // file passed is current
             Ok(None)
-        } else {
-            let year = format!("{:04}", now_date.year());
-            let month = format!("{:02}", now_date.month());
-            let day = format!("{:02}", now_date.day());
-            let new_file_name = format!(
-                "{}_{}-{}-{}.log",
-                app_name, year, month, day
-            );
-            let mut path = std::path::PathBuf::from(log_dir);
+        } else if start_date.eq(&now_date) && path.is_file() { // open file
+            Ok(Some((
+                now_date,
+                std::fs::OpenOptions::new()
+                    .write(true)
+                    .open(path)?
+            )))
+        } else { // create new file
             path.push(new_file_name);
             { // lock for creation
                 std::fs::OpenOptions::new()
