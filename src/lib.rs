@@ -59,17 +59,20 @@ impl LogFile {
             app_name, year, month, day
         );
         let mut path = std::path::PathBuf::from(log_dir);
-        if start_date.eq(&now_date) && file.is_some() { // file passed is current
+        path.push(new_file_name);
+        // file passed is current
+        if start_date.eq(&now_date) && file.is_some() {
             Ok(None)
-        } else if start_date.eq(&now_date) && path.is_file() { // open file
+        // open file
+        } else if start_date.eq(&now_date) && file.is_none() && path.is_file() {
             Ok(Some((
                 now_date,
                 std::fs::OpenOptions::new()
                     .write(true)
                     .open(path)?
             )))
-        } else { // create new file
-            path.push(new_file_name);
+        // create new file
+        } else {
             { // lock for creation
                 std::fs::OpenOptions::new()
                     .write(true)
